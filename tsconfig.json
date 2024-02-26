@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "pretty": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "target": "es2021",
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "**/*.mjs", "src/migrator.js"],
+  "exclude": ["node_modules"]
+}

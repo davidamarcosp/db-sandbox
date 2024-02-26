@@ -1,0 +1,472 @@
+{
+  "id": "22f4e93a-442e-4aba-8bb0-7e9f8cd67816",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "Employees": {
+      "name": "Employees",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "ProductStockByEmployee": {
+      "name": "ProductStockByEmployee",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "employeeId": {
+          "name": "employeeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currentStock": {
+          "name": "currentStock",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ProductStockByEmployee_productId_Products_id_fk": {
+          "name": "ProductStockByEmployee_productId_Products_id_fk",
+          "tableFrom": "ProductStockByEmployee",
+          "tableTo": "Products",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ProductStockByEmployee_employeeId_Employees_id_fk": {
+          "name": "ProductStockByEmployee_employeeId_Employees_id_fk",
+          "tableFrom": "ProductStockByEmployee",
+          "tableTo": "Employees",
+          "columnsFrom": [
+            "employeeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "Products": {
+      "name": "Products",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "PurchasesOrders": {
+      "name": "PurchasesOrders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "employeeId": {
+          "name": "employeeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "purchaseOrdersStatus",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "PurchasesOrders_productId_Products_id_fk": {
+          "name": "PurchasesOrders_productId_Products_id_fk",
+          "tableFrom": "PurchasesOrders",
+          "tableTo": "Products",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "PurchasesOrders_employeeId_Employees_id_fk": {
+          "name": "PurchasesOrders_employeeId_Employees_id_fk",
+          "tableFrom": "PurchasesOrders",
+          "tableTo": "Employees",
+          "columnsFrom": [
+            "employeeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "SalesOrders": {
+      "name": "SalesOrders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "employeeId": {
+          "name": "employeeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "salesOrdersStatus",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "SalesOrders_productId_Products_id_fk": {
+          "name": "SalesOrders_productId_Products_id_fk",
+          "tableFrom": "SalesOrders",
+          "tableTo": "Products",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "SalesOrders_employeeId_Employees_id_fk": {
+          "name": "SalesOrders_employeeId_Employees_id_fk",
+          "tableFrom": "SalesOrders",
+          "tableTo": "Employees",
+          "columnsFrom": [
+            "employeeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "StockTransactions": {
+      "name": "StockTransactions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "quantityChange": {
+          "name": "quantityChange",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transactionType": {
+          "name": "transactionType",
+          "type": "transactionType",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "employeeId": {
+          "name": "employeeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "salesOrderId": {
+          "name": "salesOrderId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchasesOrderId": {
+          "name": "purchasesOrderId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "StockTransactions_productId_Products_id_fk": {
+          "name": "StockTransactions_productId_Products_id_fk",
+          "tableFrom": "StockTransactions",
+          "tableTo": "Products",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "StockTransactions_employeeId_Employees_id_fk": {
+          "name": "StockTransactions_employeeId_Employees_id_fk",
+          "tableFrom": "StockTransactions",
+          "tableTo": "Employees",
+          "columnsFrom": [
+            "employeeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "StockTransactions_salesOrderId_SalesOrders_id_fk": {
+          "name": "StockTransactions_salesOrderId_SalesOrders_id_fk",
+          "tableFrom": "StockTransactions",
+          "tableTo": "SalesOrders",
+          "columnsFrom": [
+            "salesOrderId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "StockTransactions_purchasesOrderId_PurchasesOrders_id_fk": {
+          "name": "StockTransactions_purchasesOrderId_PurchasesOrders_id_fk",
+          "tableFrom": "StockTransactions",
+          "tableTo": "PurchasesOrders",
+          "columnsFrom": [
+            "purchasesOrderId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "purchaseOrdersStatus": {
+      "name": "purchaseOrdersStatus",
+      "values": {
+        "CREATED": "CREATED",
+        "CANCELLED": "CANCELLED",
+        "PAID": "PAID"
+      }
+    },
+    "salesOrdersStatus": {
+      "name": "salesOrdersStatus",
+      "values": {
+        "CREATED": "CREATED",
+        "CANCELLED": "CANCELLED",
+        "DELIVERED": "DELIVERED"
+      }
+    },
+    "transactionType": {
+      "name": "transactionType",
+      "values": {
+        "PURCHASE": "PURCHASE",
+        "SALE": "SALE",
+        "RETURN": "RETURN",
+        "DAMAGE": "DAMAGE",
+        "CORRECTION": "CORRECTION",
+        "TRANSFER": "TRANSFER"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
