@@ -1,0 +1,1 @@
+ALTER TYPE "salesOrdersStatus" ADD VALUE 'DISPUTED';
