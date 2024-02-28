@@ -3,6 +3,7 @@
     "skipLibCheck": true,
     "module": "commonjs",
     "moduleResolution": "node",
+    "esModuleInterop": true,
     "pretty": true,
     "resolveJsonModule": true,
     "sourceMap": true,

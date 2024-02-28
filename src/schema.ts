@@ -1,6 +1,9 @@
 import { relations } from "drizzle-orm";
 import { decimal, integer, json, pgEnum, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
+// Missing columns:
+// - Game short code
+
 export const games = pgTable("Games", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -166,17 +169,21 @@ export const productStockTransactionsRelations = relations(productStockTransacti
   }),
 }));
 
-export const productStock = pgTable("ProductStock", {
-  id: serial("id").primaryKey(),
-  productId: integer("productId").notNull(),
-  employeeId: integer("employeeId").notNull(),
-  gameRealmId: integer("gameRealmId").notNull(),
-  currentStock: integer("currentStock").notNull(),
-  createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
-}, (table) => ({
-  employee_product_gameRealm_idx: unique("employee_product_gameRealm").on(table.employeeId, table.productId, table.gameRealmId),
-}));
+export const productStock = pgTable(
+  "ProductStock",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("productId").notNull(),
+    employeeId: integer("employeeId").notNull(),
+    gameRealmId: integer("gameRealmId").notNull(),
+    currentStock: integer("currentStock").notNull(),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
+  },
+  (table) => ({
+    employee_product_gameRealm_idx: unique("employee_product_gameRealm").on(table.employeeId, table.productId, table.gameRealmId),
+  }),
+);
 
 export const productStockRelations = relations(productStock, ({ one }) => ({
   product: one(products, {
