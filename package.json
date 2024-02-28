@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "tsx -r dotenv/config ./src/index.ts",
     "seed": "tsx -r dotenv/config ./src/seed.ts",
     "check": "npx @biomejs/biome check --apply ./src",
     "migrate:gen": "drizzle-kit generate:pg",

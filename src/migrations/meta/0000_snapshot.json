@@ -1,5 +1,5 @@
 {
-  "id": "86122245-7bf4-4b9b-b1b5-04305d46e801",
+  "id": "c7c4c8df-a102-46d1-87c0-d6e4568620df",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -245,7 +245,7 @@
         },
         "transactionType": {
           "name": "transactionType",
-          "type": "transactionType",
+          "type": "productStockTransactionType",
           "primaryKey": false,
           "notNull": true
         },
@@ -534,7 +534,7 @@
         },
         "transactionType": {
           "name": "transactionType",
-          "type": "transactionType",
+          "type": "supplierBalanceTransactionType",
           "primaryKey": false,
           "notNull": true
         },
@@ -606,12 +606,15 @@
     }
   },
   "enums": {
-    "transactionType": {
-      "name": "transactionType",
+    "productStockTransactionType": {
+      "name": "productStockTransactionType",
       "values": {
         "PURCHASE": "PURCHASE",
-        "ADJUSTMENT": "ADJUSTMENT",
-        "PAYMENT": "PAYMENT"
+        "SALE": "SALE",
+        "RETURN": "RETURN",
+        "DAMAGE": "DAMAGE",
+        "CORRECTION": "CORRECTION",
+        "TRANSFER": "TRANSFER"
       }
     },
     "purchaseOrdersStatus": {
@@ -628,6 +631,14 @@
         "CREATED": "CREATED",
         "CANCELLED": "CANCELLED",
         "DELIVERED": "DELIVERED"
+      }
+    },
+    "supplierBalanceTransactionType": {
+      "name": "supplierBalanceTransactionType",
+      "values": {
+        "PURCHASE": "PURCHASE",
+        "ADJUSTMENT": "ADJUSTMENT",
+        "PAYMENT": "PAYMENT"
       }
     }
   },

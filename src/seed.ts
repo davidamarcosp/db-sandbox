@@ -13,13 +13,13 @@ async function seedDatabase() {
     await seedProductCategories();
     await seedGameRealms();
     await seedProducts();
-    console.log('SEED ENDED')
+    console.log("SEED ENDED");
   } catch (error) {
-    console.log(error)
+    console.log(error);
   } finally {
-    process.exit(0)
+    process.exit(0);
   }
-};
+}
 
 async function seedEmployees() {
   await db.insert(schema.employees).values({ name: "Merlyx" }).onConflictDoNothing();

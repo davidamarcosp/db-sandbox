@@ -72,6 +72,9 @@ export const suppliers = pgTable("Suppliers", {
 
 export const salesOrdersStatusEnum = pgEnum("salesOrdersStatus", ["CREATED", "CANCELLED", "DELIVERED"]);
 
+// Changes:
+// - Rename "id" column into "salesOrderId"
+
 export const salesOrders = pgTable("SalesOrders", {
   id: serial("id").primaryKey(),
   quantity: integer("quantity").notNull(),
@@ -82,6 +85,8 @@ export const salesOrders = pgTable("SalesOrders", {
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
+
+export type SalesOrder = typeof salesOrders.$inferSelect;
 
 export const salesOrdersRelations = relations(salesOrders, ({ one }) => ({
   product: one(products, {
@@ -100,6 +105,9 @@ export const salesOrdersRelations = relations(salesOrders, ({ one }) => ({
 
 export const purchaseOrdersStatusEnum = pgEnum("purchaseOrdersStatus", ["CREATED", "CANCELLED", "PAID"]);
 
+// Changes:
+// - Rename "id" column into "purchaseOrderId"
+
 export const purchaseOrders = pgTable("PurchasesOrders", {
   id: serial("id").primaryKey(),
   quantity: integer("quantity").notNull(),
@@ -111,6 +119,8 @@ export const purchaseOrders = pgTable("PurchasesOrders", {
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
+
+export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
 
 export const purchasesOrdersRelations = relations(purchaseOrders, ({ one }) => ({
   product: one(products, {
@@ -131,7 +141,8 @@ export const purchasesOrdersRelations = relations(purchaseOrders, ({ one }) => (
   }),
 }));
 
-export const productStockTransactionsTypeEnum = pgEnum("transactionType", ["PURCHASE", "SALE", "RETURN", "DAMAGE", "CORRECTION", "TRANSFER"]);
+export const productStockTransactionsTypeEnum = pgEnum("productStockTransactionType", ["PURCHASE", "SALE", "RETURN", "DAMAGE", "CORRECTION", "TRANSFER"]);
+export type ProductStockTransactionTypeUnion = typeof productStockTransactions.$inferSelect.transactionType
 
 export const productStockTransactions = pgTable("ProductStockTransactions", {
   id: serial("id").primaryKey(),
@@ -200,7 +211,7 @@ export const productStockRelations = relations(productStock, ({ one }) => ({
   }),
 }));
 
-export const supplierBalanceTransactionsTypeEnum = pgEnum("transactionType", ["PURCHASE", "ADJUSTMENT", "PAYMENT"]);
+export const supplierBalanceTransactionsTypeEnum = pgEnum("supplierBalanceTransactionType", ["PURCHASE", "ADJUSTMENT", "PAYMENT"]);
 
 export const supplierBalanceTransactions = pgTable("SupplierBalanceTransactions", {
   id: serial("id").primaryKey(),

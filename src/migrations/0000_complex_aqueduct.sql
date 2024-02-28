@@ -1,5 +1,5 @@
 DO $$ BEGIN
- CREATE TYPE "transactionType" AS ENUM('PURCHASE', 'ADJUSTMENT', 'PAYMENT');
+ CREATE TYPE "productStockTransactionType" AS ENUM('PURCHASE', 'SALE', 'RETURN', 'DAMAGE', 'CORRECTION', 'TRANSFER');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -12,6 +12,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "salesOrdersStatus" AS ENUM('CREATED', 'CANCELLED', 'DELIVERED');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "supplierBalanceTransactionType" AS ENUM('PURCHASE', 'ADJUSTMENT', 'PAYMENT');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -61,7 +67,7 @@ CREATE TABLE IF NOT EXISTS "ProductStock" (
 CREATE TABLE IF NOT EXISTS "ProductStockTransactions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"quantityChange" integer NOT NULL,
-	"transactionType" "transactionType" NOT NULL,
+	"transactionType" "productStockTransactionType" NOT NULL,
 	"productId" integer NOT NULL,
 	"employeeId" integer NOT NULL,
 	"gameRealmId" integer NOT NULL,
@@ -115,7 +121,7 @@ CREATE TABLE IF NOT EXISTS "SupplierBalance" (
 CREATE TABLE IF NOT EXISTS "SupplierBalanceTransactions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"quantityChange" numeric(19, 4) NOT NULL,
-	"transactionType" "transactionType" NOT NULL,
+	"transactionType" "supplierBalanceTransactionType" NOT NULL,
 	"notes" text,
 	"purchasesOrderId" integer,
 	"createdAt" timestamp(3) DEFAULT now() NOT NULL,
