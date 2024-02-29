@@ -1,54 +1,79 @@
 import { relations } from "drizzle-orm";
 import { decimal, integer, json, pgEnum, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
-// Missing columns:
-// - Game short code
-
 export const games = pgTable("Games", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
+  shortCode: varchar("shortCode", { length: 255 }).unique("game_short_code_idx").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
 
-export const gameRealms = pgTable("GameRealms", {
-  id: serial("id").primaryKey(),
-  server: varchar("server", { length: 255 }).default("Main Server").notNull(),
-  region: varchar("region", { length: 255 }),
-  attributes: json("attributes").default({}),
-  gameId: integer("gameId").notNull(),
-  createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
-});
+export const gamesRelations = relations(games, ({ many }) => ({
+  gameRealms: many(gameRealms),
+  products: many(products)
+}));
 
-export const gameRealmsRelations = relations(gameRealms, ({ one }) => ({
+export const gameRealms = pgTable(
+  "GameRealms",
+  {
+    id: serial("id").primaryKey(),
+    server: varchar("server", { length: 255 }).default("Main Server").notNull(),
+    region: varchar("region", { length: 255 }),
+    attributes: json("attributes").default({}),
+    gameId: integer("gameId").notNull(),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
+  },
+  (table) => ({
+    gameRealms_unique_idx: unique("gameRealms_game_server").on(table.gameId, table.server),
+  }),
+);
+
+export const gameRealmsRelations = relations(gameRealms, ({ one, many }) => ({
   game: one(games, {
     fields: [gameRealms.gameId],
     references: [games.id],
   }),
+  products: many(products)
 }));
 
 export const productCategories = pgTable("ProductCategories", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).unique("productCategory").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
 
-export const products = pgTable("Products", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  gameId: integer("gameId").notNull(),
-  productCategoryId: integer("productCategoryId").notNull(),
-  createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
-});
+export const productCategoriesRelations = relations(productCategories, ({ many }) => ({
+  products: many(products)
+}));
+
+export const products = pgTable(
+  "Products",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    gameId: integer("gameId").notNull(),
+    gameRealmId: integer("gameRealmId").notNull(),
+    productCategoryId: integer("productCategoryId").notNull(),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
+  },
+  (table) => ({
+    products_unique_idx: unique("products_game_gameRealm_productCategory").on(table.gameId, table.gameRealmId, table.productCategoryId),
+  }),
+);
 
 export const productsRelations = relations(products, ({ one }) => ({
   game: one(games, {
     fields: [products.gameId],
     references: [games.id],
+  }),
+  gameRealm: one(gameRealms, {
+    fields: [products.gameRealmId],
+    references: [gameRealms.id],
   }),
   productCategory: one(productCategories, {
     fields: [products.productCategoryId],
@@ -58,6 +83,7 @@ export const productsRelations = relations(products, ({ one }) => ({
 
 export const employees = pgTable("Employees", {
   id: serial("id").primaryKey(),
+  discordId: varchar("discordId", { length: 255 }).unique().notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
@@ -71,13 +97,13 @@ export const suppliers = pgTable("Suppliers", {
 });
 
 export const salesOrdersStatusEnum = pgEnum("salesOrdersStatus", ["CREATED", "CANCELLED", "DELIVERED"]);
-
-// Changes:
-// - Rename "id" column into "salesOrderId"
+export type SalesOrdersStatusUnion = typeof salesOrders.$inferSelect.status;
 
 export const salesOrders = pgTable("SalesOrders", {
-  id: serial("id").primaryKey(),
+  salesOrderId: serial("salesOrderId").primaryKey(),
   quantity: integer("quantity").notNull(),
+  price: decimal("price", { precision: 19, scale: 4 }).notNull(),
+  rate: decimal("rate", { precision: 19, scale: 4 }).notNull(),
   status: salesOrdersStatusEnum("status"),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
@@ -104,13 +130,13 @@ export const salesOrdersRelations = relations(salesOrders, ({ one }) => ({
 }));
 
 export const purchaseOrdersStatusEnum = pgEnum("purchaseOrdersStatus", ["CREATED", "CANCELLED", "PAID"]);
-
-// Changes:
-// - Rename "id" column into "purchaseOrderId"
+export type purchaseOrdersStatusUnion = typeof purchaseOrders.$inferSelect.status;
 
 export const purchaseOrders = pgTable("PurchasesOrders", {
-  id: serial("id").primaryKey(),
+  purchaseOrderId: serial("purchaseOrderId").primaryKey(),
   quantity: integer("quantity").notNull(),
+  price: decimal("price", { precision: 19, scale: 4 }).notNull(),
+  rate: decimal("rate", { precision: 19, scale: 4 }).notNull(),
   status: purchaseOrdersStatusEnum("status"),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
@@ -142,17 +168,17 @@ export const purchasesOrdersRelations = relations(purchaseOrders, ({ one }) => (
 }));
 
 export const productStockTransactionsTypeEnum = pgEnum("productStockTransactionType", ["PURCHASE", "SALE", "RETURN", "DAMAGE", "CORRECTION", "TRANSFER"]);
-export type ProductStockTransactionTypeUnion = typeof productStockTransactions.$inferSelect.transactionType
+export type ProductStockTransactionTypeUnion = typeof productStockTransactions.$inferSelect.transactionType;
 
 export const productStockTransactions = pgTable("ProductStockTransactions", {
   id: serial("id").primaryKey(),
-  quantityChange: integer("quantityChange").notNull(),
+  stockChange: decimal("stockChange", { precision: 19, scale: 4 }).notNull(),
   transactionType: productStockTransactionsTypeEnum("transactionType").notNull(),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
   gameRealmId: integer("gameRealmId").notNull(),
   salesOrderId: integer("salesOrderId"),
-  purchasesOrderId: integer("purchasesOrderId"),
+  purchaseOrderId: integer("purchaseOrderId"),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
@@ -172,11 +198,11 @@ export const productStockTransactionsRelations = relations(productStockTransacti
   }),
   salesOrder: one(salesOrders, {
     fields: [productStockTransactions.salesOrderId],
-    references: [salesOrders.id],
+    references: [salesOrders.salesOrderId],
   }),
   purchaseOrder: one(purchaseOrders, {
-    fields: [productStockTransactions.purchasesOrderId],
-    references: [purchaseOrders.id],
+    fields: [productStockTransactions.purchaseOrderId],
+    references: [purchaseOrders.purchaseOrderId],
   }),
 }));
 
@@ -187,12 +213,12 @@ export const productStock = pgTable(
     productId: integer("productId").notNull(),
     employeeId: integer("employeeId").notNull(),
     gameRealmId: integer("gameRealmId").notNull(),
-    currentStock: integer("currentStock").notNull(),
+    currentStock: decimal("currentStock", { precision: 19, scale: 4 }).notNull(),
     createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
   },
   (table) => ({
-    employee_product_gameRealm_idx: unique("employee_product_gameRealm").on(table.employeeId, table.productId, table.gameRealmId),
+    productStock_unique_idx: unique("productStock_employee_product_gameRealm").on(table.employeeId, table.productId, table.gameRealmId),
   }),
 );
 
@@ -212,10 +238,11 @@ export const productStockRelations = relations(productStock, ({ one }) => ({
 }));
 
 export const supplierBalanceTransactionsTypeEnum = pgEnum("supplierBalanceTransactionType", ["PURCHASE", "ADJUSTMENT", "PAYMENT"]);
+export type supplierBalanceTransactionsTypeUnion = typeof supplierBalanceTransactions.$inferSelect.transactionType;
 
 export const supplierBalanceTransactions = pgTable("SupplierBalanceTransactions", {
   id: serial("id").primaryKey(),
-  quantityChange: decimal("quantityChange", { precision: 19, scale: 4 }).notNull(),
+  balanceChange: decimal("quantityChange", { precision: 19, scale: 4 }).notNull(),
   transactionType: supplierBalanceTransactionsTypeEnum("transactionType").notNull(),
   notes: text("notes"),
   purchasesOrderId: integer("purchasesOrderId"),
@@ -225,8 +252,8 @@ export const supplierBalanceTransactions = pgTable("SupplierBalanceTransactions"
 
 export const supplierBalance = pgTable("SupplierBalance", {
   id: serial("id").primaryKey(),
-  currentBalance: integer("currentBalance").notNull(),
-  supplierId: integer("supplierId"),
+  currentBalance: decimal("currentBalance", { precision: 19, scale: 4 }).notNull(),
+  supplierId: integer("supplierId").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });

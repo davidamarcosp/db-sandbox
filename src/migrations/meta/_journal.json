@@ -15,6 +15,13 @@
       "when": 1709089454777,
       "tag": "0001_silly_gwen_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1709175121145,
+      "tag": "0002_overrated_fantastic_four",
+      "breakpoints": true
     }
   ]
 }

@@ -13,30 +13,34 @@ async function main() {
 }
 
 const mockedPurchaseOrder: schema.PurchaseOrder = {
-  id: 1,
+  purchaseOrderId: 1,
   employeeId: 1,
   gameRealmId: 1,
   productId: 1,
   supplierId: 1,
-  quantity: 1000,
+  quantity: 100,
+  price: "15",
+  rate: "0.15",
   status: "PAID",
   createdAt: new Date().toDateString(),
   updatedAt: new Date().toDateString(),
 };
 
 const mockedSalesOrder: schema.SalesOrder = {
-  id: 1,
+  salesOrderId: 1,
   employeeId: 1,
   gameRealmId: 1,
   productId: 1,
-  quantity: -500,
+  quantity: -200,
+  price: "30",
+  rate: "0.15",
   status: "DELIVERED",
   createdAt: new Date().toDateString(),
   updatedAt: new Date().toDateString(),
 };
 
 async function updateStockTransaction(order: schema.PurchaseOrder | schema.SalesOrder, type: ProductStockTransactionTypeUnion) {
-  const { employeeId, productId, gameRealmId, quantity, id } = order;
+  const { employeeId, productId, gameRealmId, quantity } = order;
 
   await db.transaction(async (tx) => {
     const [stock] = await tx
@@ -51,7 +55,7 @@ async function updateStockTransaction(order: schema.PurchaseOrder | schema.Sales
       await tx.update(schema.productStock).set({ currentStock: updatedStock }).where(eq(schema.productStock.id, stock.id));
     } else {
       await tx.insert(schema.productStock).values({
-        currentStock: quantity,
+        currentStock: quantity.toLocaleString(),
         employeeId,
         gameRealmId,
         productId,
@@ -62,11 +66,33 @@ async function updateStockTransaction(order: schema.PurchaseOrder | schema.Sales
       employeeId,
       productId,
       gameRealmId,
-      quantityChange: quantity,
+      stockChange: quantity.toLocaleString(),
       transactionType: type,
-      purchasesOrderId: type === "PURCHASE" ? id : null,
-      salesOrderId: type === "SALE" ? id : null,
+      purchaseOrderId: "purchaseOrderId" in order ? order.purchaseOrderId : null,
+      salesOrderId: "salesOrderId" in order ? order.salesOrderId : null,
     });
+
+    const isTransactionAPurchaseFromSupplier = "purchaseOrderId" in order && "supplierId" in order;
+
+    if (type === "PURCHASE" && isTransactionAPurchaseFromSupplier && order.supplierId) {
+      const [balance] = await tx.select().from(schema.supplierBalance).where(eq(schema.supplierBalance.supplierId, order.supplierId));
+
+      if (balance) {
+        const updatedBalance = balance + order.price;
+        await tx.update(schema.supplierBalance).set({ currentBalance: updatedBalance }).where(eq(schema.supplierBalance.id, balance.id));
+      } else {
+        await tx.insert(schema.supplierBalance).values({
+          currentBalance: order.price,
+          supplierId: order.supplierId,
+        });
+      }
+
+      await tx.insert(schema.supplierBalanceTransactions).values({
+        balanceChange: order.price,
+        transactionType: "PURCHASE",
+        purchasesOrderId: order.purchaseOrderId,
+      });
+    }
   });
 
   // USE CASE:
