@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsx -r dotenv/config ./src/index.ts",
-    "seed": "tsx -r dotenv/config ./src/seed.ts",
-    "unseed": "tsx -r dotenv/config ./src/unseed.ts",
+    "start": "tsx ./src/index.ts",
+    "seed": "tsx ./src/seed.ts",
+    "unseed": "tsx ./src/unseed.ts",
     "check": "npx @biomejs/biome check --apply ./src",
     "migrate:gen": "drizzle-kit generate:pg",
-    "migrate:run": "node -r dotenv/config ./src/migrator.mjs"
+    "migrate:run": "node ./src/migrator.mjs",
+    "studio": "npm drizzle-kit studio"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.29.4",
+    "pg": "^8.11.3",
     "postgres": "^3.4.3"
   }
 }

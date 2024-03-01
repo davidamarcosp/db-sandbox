@@ -107,6 +107,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.gameRealmId],
     references: [gameRealms.id],
   }),
+  price: one(productPrices, {
+    fields: [products.id],
+    references: [productPrices.productId],
+  }),
   productCategory: one(productCategories, {
     fields: [products.productCategoryId],
     references: [productCategories.id],
@@ -144,9 +148,7 @@ export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
     fields: [suppliers.id],
     references: [supplierBalance.supplierId],
   }),
-  purchaseOrders: many(purchaseOrders),
-  productStockTransactions: many(productStockTransactions),
-  productStock: many(productStock),
+  purchaseOrders: many(purchaseOrders)
 }));
 
 export const salesOrdersStatusEnum = pgEnum("salesOrdersStatus", ["CREATED", "CANCELLED", "DELIVERED"]);
