@@ -1,8 +1,6 @@
 import { relations } from "drizzle-orm";
 import { decimal, integer, json, pgEnum, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
-// TODO: Make a table for prices and make a table for units
-
 export const games = pgTable("Games", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -37,6 +35,10 @@ export const gameRealmsRelations = relations(gameRealms, ({ one, many }) => ({
     fields: [gameRealms.gameId],
     references: [games.id],
   }),
+  price: one(productPrices, {
+    fields: [gameRealms.id],
+    references: [productPrices.gameRealmId],
+  }),
   products: many(products),
   productStock: many(productStock),
   productStockTransactions: many(productStockTransactions),
@@ -55,6 +57,30 @@ export const productCategoriesRelations = relations(productCategories, ({ many }
   products: many(products),
 }));
 
+export const productPricesUnitEnum = pgEnum("productPricesUnit", ["UNIT", "THOUSAND", "MILLION"]);
+export type ProductPricesUnitUnion = typeof productPrices.$inferSelect.unit;
+
+export const productPrices = pgTable("ProductPrices", {
+  id: serial("id").primaryKey(),
+  price: decimal("price", { precision: 19, scale: 4 }).notNull(),
+  unit: productPricesUnitEnum("unit").notNull(),
+  productId: integer("productId").notNull(),
+  gameRealmId: integer("productId").notNull(),
+  createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
+});
+
+export const pricesRelations = relations(productPrices, ({ one }) => ({
+  product: one(products, {
+    fields: [productPrices.productId],
+    references: [products.id],
+  }),
+  gameRealm: one(gameRealms, {
+    fields: [productPrices.gameRealmId],
+    references: [gameRealms.id],
+  }),
+}));
+
 export const products = pgTable(
   "Products",
   {
@@ -63,6 +89,7 @@ export const products = pgTable(
     description: text("description"),
     gameId: integer("gameId").notNull(),
     gameRealmId: integer("gameRealmId").notNull(),
+    priceId: integer("priceId").notNull(),
     productCategoryId: integer("productCategoryId").notNull(),
     createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
@@ -84,6 +111,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productCategory: one(productCategories, {
     fields: [products.productCategoryId],
     references: [productCategories.id],
+  }),
+  price: one(productPrices, {
+    fields: [products.priceId],
+    references: [productPrices.id],
   }),
   productStock: many(productStock),
   productStockTransactions: many(productStockTransactions),
