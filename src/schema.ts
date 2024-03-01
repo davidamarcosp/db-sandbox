@@ -148,7 +148,7 @@ export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
     fields: [suppliers.id],
     references: [supplierBalance.supplierId],
   }),
-  purchaseOrders: many(purchaseOrders)
+  purchaseOrders: many(purchaseOrders),
 }));
 
 export const salesOrdersStatusEnum = pgEnum("salesOrdersStatus", ["CREATED", "CANCELLED", "DELIVERED"]);
