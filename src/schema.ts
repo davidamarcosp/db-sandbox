@@ -89,7 +89,6 @@ export const products = pgTable(
     description: text("description"),
     gameId: integer("gameId").notNull(),
     gameRealmId: integer("gameRealmId").notNull(),
-    priceId: integer("priceId").notNull(),
     productCategoryId: integer("productCategoryId").notNull(),
     createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
@@ -111,10 +110,6 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productCategory: one(productCategories, {
     fields: [products.productCategoryId],
     references: [productCategories.id],
-  }),
-  price: one(productPrices, {
-    fields: [products.priceId],
-    references: [productPrices.id],
   }),
   productStock: many(productStock),
   productStockTransactions: many(productStockTransactions),
