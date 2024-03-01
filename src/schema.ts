@@ -65,7 +65,7 @@ export const productPrices = pgTable("ProductPrices", {
   price: decimal("price", { precision: 19, scale: 4 }).notNull(),
   unit: productPricesUnitEnum("unit").notNull(),
   productId: integer("productId").notNull(),
-  gameRealmId: integer("productId").notNull(),
+  gameRealmId: integer("gameRealmId").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
