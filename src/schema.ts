@@ -1,6 +1,8 @@
 import { relations } from "drizzle-orm";
 import { decimal, integer, json, pgEnum, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
+// TODO: Make a table for prices and make a table for units
+
 export const games = pgTable("Games", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -11,7 +13,7 @@ export const games = pgTable("Games", {
 
 export const gamesRelations = relations(games, ({ many }) => ({
   gameRealms: many(gameRealms),
-  products: many(products)
+  products: many(products),
 }));
 
 export const gameRealms = pgTable(
@@ -35,7 +37,11 @@ export const gameRealmsRelations = relations(gameRealms, ({ one, many }) => ({
     fields: [gameRealms.gameId],
     references: [games.id],
   }),
-  products: many(products)
+  products: many(products),
+  productStock: many(productStock),
+  productStockTransactions: many(productStockTransactions),
+  salesOrders: many(salesOrders),
+  purchaseOrders: many(purchaseOrders),
 }));
 
 export const productCategories = pgTable("ProductCategories", {
@@ -46,7 +52,7 @@ export const productCategories = pgTable("ProductCategories", {
 });
 
 export const productCategoriesRelations = relations(productCategories, ({ many }) => ({
-  products: many(products)
+  products: many(products),
 }));
 
 export const products = pgTable(
@@ -66,7 +72,7 @@ export const products = pgTable(
   }),
 );
 
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   game: one(games, {
     fields: [products.gameId],
     references: [games.id],
@@ -79,6 +85,10 @@ export const productsRelations = relations(products, ({ one }) => ({
     fields: [products.productCategoryId],
     references: [productCategories.id],
   }),
+  productStock: many(productStock),
+  productStockTransactions: many(productStockTransactions),
+  purchaseOrders: many(purchaseOrders),
+  salesOrders: many(salesOrders),
 }));
 
 export const employees = pgTable("Employees", {
@@ -89,6 +99,13 @@ export const employees = pgTable("Employees", {
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
 
+export const employeesRelations = relations(employees, ({ many }) => ({
+  salesOrders: many(salesOrders),
+  purchaseOrders: many(purchaseOrders),
+  productStockTransactions: many(productStockTransactions),
+  productStock: many(productStock),
+}));
+
 export const suppliers = pgTable("Suppliers", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -96,12 +113,23 @@ export const suppliers = pgTable("Suppliers", {
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
 
+export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
+  supplierBalance: one(supplierBalance, {
+    fields: [suppliers.id],
+    references: [supplierBalance.supplierId],
+  }),
+  purchaseOrders: many(purchaseOrders),
+  productStockTransactions: many(productStockTransactions),
+  productStock: many(productStock),
+}));
+
 export const salesOrdersStatusEnum = pgEnum("salesOrdersStatus", ["CREATED", "CANCELLED", "DELIVERED"]);
 export type SalesOrdersStatusUnion = typeof salesOrders.$inferSelect.status;
 
 export const salesOrders = pgTable("SalesOrders", {
   salesOrderId: serial("salesOrderId").primaryKey(),
-  quantity: integer("quantity").notNull(),
+  quantity: decimal("quantity", { precision: 19, scale: 4 }).notNull(),
+  quantityDelivered: decimal("quantityDelivered", { precision: 19, scale: 4 }).default("0").notNull(),
   price: decimal("price", { precision: 19, scale: 4 }).notNull(),
   rate: decimal("rate", { precision: 19, scale: 4 }).notNull(),
   status: salesOrdersStatusEnum("status"),
@@ -114,7 +142,7 @@ export const salesOrders = pgTable("SalesOrders", {
 
 export type SalesOrder = typeof salesOrders.$inferSelect;
 
-export const salesOrdersRelations = relations(salesOrders, ({ one }) => ({
+export const salesOrdersRelations = relations(salesOrders, ({ one, many }) => ({
   product: one(products, {
     fields: [salesOrders.productId],
     references: [products.id],
@@ -127,6 +155,7 @@ export const salesOrdersRelations = relations(salesOrders, ({ one }) => ({
     fields: [salesOrders.gameRealmId],
     references: [gameRealms.id],
   }),
+  productStockTransactions: many(productStockTransactions),
 }));
 
 export const purchaseOrdersStatusEnum = pgEnum("purchaseOrdersStatus", ["CREATED", "CANCELLED", "PAID"]);
@@ -134,7 +163,7 @@ export type purchaseOrdersStatusUnion = typeof purchaseOrders.$inferSelect.statu
 
 export const purchaseOrders = pgTable("PurchasesOrders", {
   purchaseOrderId: serial("purchaseOrderId").primaryKey(),
-  quantity: integer("quantity").notNull(),
+  quantity: decimal("quantity", { precision: 19, scale: 4 }).notNull(),
   price: decimal("price", { precision: 19, scale: 4 }).notNull(),
   rate: decimal("rate", { precision: 19, scale: 4 }).notNull(),
   status: purchaseOrdersStatusEnum("status"),
@@ -148,7 +177,7 @@ export const purchaseOrders = pgTable("PurchasesOrders", {
 
 export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
 
-export const purchasesOrdersRelations = relations(purchaseOrders, ({ one }) => ({
+export const purchasesOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
   product: one(products, {
     fields: [purchaseOrders.productId],
     references: [products.id],
@@ -165,6 +194,7 @@ export const purchasesOrdersRelations = relations(purchaseOrders, ({ one }) => (
     fields: [purchaseOrders.gameRealmId],
     references: [gameRealms.id],
   }),
+  productStockTransactions: many(productStockTransactions),
 }));
 
 export const productStockTransactionsTypeEnum = pgEnum("productStockTransactionType", ["PURCHASE", "SALE", "RETURN", "DAMAGE", "CORRECTION", "TRANSFER"]);

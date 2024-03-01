@@ -28,7 +28,7 @@ async function seedEmployees() {
 
 async function seedSupplier() {
   await db.delete(schema.suppliers);
-  await db.insert(schema.suppliers).values({ name: "Pingy" }).onConflictDoNothing();
+  await db.insert(schema.suppliers).values({ id: 1, name: "Pingy" }).onConflictDoNothing();
 }
 
 async function seedGames() {

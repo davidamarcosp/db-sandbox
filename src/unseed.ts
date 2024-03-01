@@ -13,6 +13,7 @@ async function unSeedDatabase() {
       if (!(value instanceof PgTable)) continue;
       await db.delete(value);
     }
+    console.log("UNSEED ENDED");
   } catch (error) {
     console.log(error);
   } finally {
