@@ -21,28 +21,20 @@ app.get("/", (c) => {
 });
 
 app.post("/generate/purchase", async (c) => {
-  const { productId, employeeId, supplierId } = c.req.query();
+  const { employeeId, productId, supplierId } = c.req.query();
 
-  if (productId && Number.isNaN(parseInt(productId))) {
-    return c.json({ message: "Invalid productId" }, 404);
-  }
+  const queryParams = { employeeId, productId, supplierId };
 
-  if (employeeId && Number.isNaN(parseInt(employeeId))) {
-    return c.json({ message: "Invalid employeeId" }, 404);
-  }
+  const { employeeId: parsedEmployeeId, productId: parsedProductId, supplierId: parsedSupplierId } = validateQueryParams(queryParams);
 
-  if (supplierId && Number.isNaN(parseInt(supplierId))) {
-    return c.json({ message: "Invalid supplierId" }, 404);
-  }
-
-  const products = productId ? await db.query.products.findMany({ where: eq(schema.products.id, parseInt(productId)) }) : await db.query.products.findMany();
-
-  const employees = employeeId
-    ? await db.query.employees.findMany({ where: eq(schema.employees.id, parseInt(employeeId)) })
+  const employees = parsedEmployeeId
+    ? await db.query.employees.findMany({ where: eq(schema.employees.id, parsedEmployeeId) })
     : await db.query.employees.findMany();
 
-  const suppliers = supplierId
-    ? await db.query.suppliers.findMany({ where: eq(schema.suppliers.id, parseInt(supplierId)) })
+  const products = parsedProductId ? await db.query.products.findMany({ where: eq(schema.products.id, parsedProductId) }) : await db.query.products.findMany();
+
+  const suppliers = parsedSupplierId
+    ? await db.query.suppliers.findMany({ where: eq(schema.suppliers.id, parsedSupplierId) })
     : await db.query.suppliers.findMany();
 
   const product = getRandomElement(products);
@@ -65,7 +57,7 @@ app.post("/generate/purchase", async (c) => {
   const randomQuantity = new Decimal(faker.fakerEN.number.float({ max: 2000, min: 100, fractionDigits: 2 })).toString();
   const rate = (+randomPrice / +randomQuantity).toString();
 
-  const createdPurchase = await db
+  const [createdPurchase] = await db
     .insert(schema.purchaseOrders)
     .values({
       supplierId: supplier.id,
@@ -79,7 +71,7 @@ app.post("/generate/purchase", async (c) => {
     })
     .returning();
 
-  await updateStockTransaction(createdPurchase[0], "PURCHASE");
+  await updateStockTransaction(createdPurchase, "PURCHASE");
 
   return c.json(createdPurchase, 200);
 });
@@ -87,26 +79,18 @@ app.post("/generate/purchase", async (c) => {
 app.post("/generate/sale", async (c) => {
   const { productId, marketplaceId, employeeId } = c.req.query();
 
-  if (productId && Number.isNaN(parseInt(productId))) {
-    return c.json({ message: "Invalid productId" }, 404);
-  }
+  const queryParams = { productId, marketplaceId, employeeId };
 
-  if (marketplaceId && Number.isNaN(parseInt(marketplaceId))) {
-    return c.json({ message: "Invalid marketplaceId" }, 404);
-  }
+  const { productId: parsedProductId, marketplaceId: parsedMarketplaceId, employeeId: parsedEmployeeId } = validateQueryParams(queryParams);
 
-  if (employeeId && Number.isNaN(parseInt(employeeId))) {
-    return c.json({ message: "Invalid employeeId" }, 404);
-  }
+  const products = parsedProductId ? await db.query.products.findMany({ where: eq(schema.products.id, parsedProductId) }) : await db.query.products.findMany();
 
-  const products = productId ? await db.query.products.findMany({ where: eq(schema.products.id, parseInt(productId)) }) : await db.query.products.findMany();
-
-  const marketplaces = marketplaceId
-    ? await db.query.marketplaces.findMany({ where: eq(schema.marketplaces.id, parseInt(marketplaceId)) })
+  const marketplaces = parsedMarketplaceId
+    ? await db.query.marketplaces.findMany({ where: eq(schema.marketplaces.id, parsedMarketplaceId) })
     : await db.query.marketplaces.findMany();
 
-  const employees = employeeId
-    ? await db.query.employees.findMany({ where: eq(schema.employees.id, parseInt(employeeId)) })
+  const employees = parsedEmployeeId
+    ? await db.query.employees.findMany({ where: eq(schema.employees.id, parsedEmployeeId) })
     : await db.query.employees.findMany();
 
   const product = getRandomElement(products);
@@ -164,10 +148,10 @@ app.post("/generate/delivery", async (c) => {
   }
 
   const missingQuantitytoDeliver = new Decimal(salesOrder.quantity).minus(new Decimal(salesOrder.quantityDelivered)).toNumber();
-  const randomQuantityDelivered = new Decimal(faker.fakerEN.number.float({ max: missingQuantitytoDeliver, min: 15, fractionDigits: 2 })).toString();
+  const randomQuantityDelivered = new Decimal(faker.fakerEN.number.float({ max: missingQuantitytoDeliver, min: 0, fractionDigits: 2 })).toString();
   const isSaleFullyDelivered = missingQuantitytoDeliver.toString() === randomQuantityDelivered;
 
-  await db.transaction(async (tx) => {
+  const wasTransactionDone = await db.transaction(async (tx) => {
     const [stock] = await tx
       .select()
       .from(schema.productStock)
@@ -183,8 +167,7 @@ app.post("/generate/delivery", async (c) => {
       const updatedStock = new Decimal(stock.currentStock).minus(new Decimal(randomQuantityDelivered)).toString();
       await tx.update(schema.productStock).set({ currentStock: updatedStock, updatedAt: new Date().toISOString() }).where(eq(schema.productStock.id, stock.id));
     } else {
-      tx.rollback();
-      return c.json({ message: `No stock for product "${salesOrder.productId}"` }, 400);
+      return false;
     }
 
     await tx.insert(schema.productStockTransactions).values({
@@ -196,13 +179,22 @@ app.post("/generate/delivery", async (c) => {
       salesOrderId: salesOrder.salesOrderId,
     });
 
+    const newQuantityDelivered = new Decimal(salesOrder.quantityDelivered).add(new Decimal(randomQuantityDelivered)).toString();
+
     await tx.update(schema.salesOrders).set({
-      quantityDelivered: randomQuantityDelivered,
+      quantityDelivered: newQuantityDelivered,
       status: isSaleFullyDelivered ? "DELIVERED" : "CREATED",
+      updatedAt: new Date().toISOString(),
     });
+
+    return true;
   });
 
-  return c.json({ message: `${randomQuantityDelivered} delivered for sale "${salesOrderId}"` }, 200);
+  if (wasTransactionDone) {
+    return c.json({ message: `${randomQuantityDelivered} delivered for sale "${salesOrder.salesOrderId}"` }, 200);
+  }
+
+  return c.json({ message: "Delivery could not be made" }, 400);
 });
 
 const port = 3000;
@@ -224,4 +216,28 @@ function getRandomElement<T>(arr: T[]): T | undefined {
 
   const randomIndex = Math.floor(Math.random() * arr.length);
   return arr[randomIndex];
+}
+
+function validateQueryParams<T extends Record<string, string | undefined>>(obj: T): { [K in keyof T]?: number } {
+  const parsedObject = {} as { [K in keyof T]?: number };
+
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const str = obj[key];
+
+      if (str === undefined) {
+        continue;
+      }
+
+      const num = parseInt(str);
+
+      if (Number.isNaN(num)) {
+        throw new Error(`Value "${str}" for key "${key}" is not a valid parseable integer.`);
+      }
+
+      parsedObject[key] = num;
+    }
+  }
+
+  return parsedObject;
 }
