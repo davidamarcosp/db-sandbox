@@ -10,6 +10,7 @@ const db = drizzle(client, { schema, logger: true });
 
 async function seedDatabase() {
   try {
+    await seedMarketplaces();
     await seedEmployees();
     await seedSupplier();
     await seedGames();
@@ -27,11 +28,14 @@ async function seedDatabase() {
 
 async function seedEmployees() {
   await db.delete(schema.employees);
-  await db.insert(schema.employees).values([
-    { id: 1, name: "Merlyx", discordId: "149378100088668160" },
-    { id: 2, name: "DeivoT", discordId: "147923022760771584" },
-    { id: 3, name: "Keroz", discordId: "147926645653766144" }
-  ]).onConflictDoNothing();
+  await db
+    .insert(schema.employees)
+    .values([
+      { id: 1, name: "Merlyx", discordId: "149378100088668160" },
+      { id: 2, name: "DeivoT", discordId: "147923022760771584" },
+      { id: 3, name: "Keroz", discordId: "147926645653766144" },
+    ])
+    .onConflictDoNothing();
 }
 
 async function seedSupplier() {
@@ -95,6 +99,18 @@ async function seedProductPrices() {
       { id: 1, gameRealmId: 1, productId: 1, unit: "MILLION", price: "0.17" },
       { id: 2, gameRealmId: 2, productId: 2, unit: "MILLION", price: "0.017" },
       { id: 3, gameRealmId: 3, productId: 3, unit: "THOUSAND", price: "5" },
+    ])
+    .onConflictDoNothing();
+}
+
+async function seedMarketplaces() {
+  await db.delete(schema.marketplaces);
+  await db
+    .insert(schema.marketplaces)
+    .values([
+      { id: 1, name: "Eldorado" },
+      { id: 2, name: "Player Auctions" },
+      { id: 3, name: "CoinRushers" },
     ])
     .onConflictDoNothing();
 }

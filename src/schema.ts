@@ -57,6 +57,17 @@ export const productCategoriesRelations = relations(productCategories, ({ many }
   products: many(products),
 }));
 
+export const marketplaces = pgTable("Marketplaces", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).unique("marketplaceName").notNull(),
+  createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
+});
+
+export const marketplacesRelations = relations(marketplaces, ({ many }) => ({
+  salesOrders: many(salesOrders),
+}));
+
 export const productPricesUnitEnum = pgEnum("productPricesUnit", ["UNIT", "THOUSAND", "MILLION"]);
 export type ProductPricesUnitUnion = typeof productPrices.$inferSelect.unit;
 
@@ -164,6 +175,7 @@ export const salesOrders = pgTable("SalesOrders", {
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
   gameRealmId: integer("gameRealmId").notNull(),
+  marketplaceId: integer("marketplaceId").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
@@ -182,6 +194,10 @@ export const salesOrdersRelations = relations(salesOrders, ({ one, many }) => ({
   gameRealm: one(gameRealms, {
     fields: [salesOrders.gameRealmId],
     references: [gameRealms.id],
+  }),
+  marketplace: one(marketplaces, {
+    fields: [salesOrders.marketplaceId],
+    references: [marketplaces.id],
   }),
   productStockTransactions: many(productStockTransactions),
 }));

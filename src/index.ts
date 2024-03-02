@@ -1,12 +1,12 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
+import { Decimal } from "decimal.js";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 import { ProductStockTransactionTypeUnion } from "./schema";
-import { Decimal } from 'decimal.js'
 
 const client = postgres(process.env.DB_URL as string);
 const db = drizzle(client, { schema, logger: true });
@@ -84,7 +84,10 @@ export async function updateStockTransaction(order: schema.PurchaseOrder | schem
 
       if (balance) {
         const updatedBalance = new Decimal(balance.currentBalance).add(new Decimal(order.price)).toString();
-        await tx.update(schema.supplierBalance).set({ currentBalance: updatedBalance, updatedAt: new Date().toISOString() }).where(eq(schema.supplierBalance.id, balance.id));
+        await tx
+          .update(schema.supplierBalance)
+          .set({ currentBalance: updatedBalance, updatedAt: new Date().toISOString() })
+          .where(eq(schema.supplierBalance.id, balance.id));
       } else {
         await tx.insert(schema.supplierBalance).values({
           currentBalance: order.price,
