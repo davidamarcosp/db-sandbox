@@ -11,7 +11,6 @@ export const games = pgTable("Games", {
 
 export const gamesRelations = relations(games, ({ many }) => ({
   gameRealms: many(gameRealms),
-  products: many(products),
 }));
 
 export const gameRealms = pgTable(
@@ -35,15 +34,7 @@ export const gameRealmsRelations = relations(gameRealms, ({ one, many }) => ({
     fields: [gameRealms.gameId],
     references: [games.id],
   }),
-  price: one(productPrices, {
-    fields: [gameRealms.id],
-    references: [productPrices.gameRealmId],
-  }),
   products: many(products),
-  productStock: many(productStock),
-  productStockTransactions: many(productStockTransactions),
-  salesOrders: many(salesOrders),
-  purchaseOrders: many(purchaseOrders),
 }));
 
 export const productCategories = pgTable("ProductCategories", {
@@ -69,58 +60,30 @@ export const marketplacesRelations = relations(marketplaces, ({ many }) => ({
 }));
 
 export const productPricesUnitEnum = pgEnum("productPricesUnit", ["UNIT", "THOUSAND", "MILLION"]);
-export type ProductPricesUnitUnion = typeof productPrices.$inferSelect.unit;
-
-export const productPrices = pgTable("ProductPrices", {
-  id: serial("id").primaryKey(),
-  price: decimal("price", { precision: 19, scale: 4 }).notNull(),
-  unit: productPricesUnitEnum("unit").notNull(),
-  productId: integer("productId").notNull(),
-  gameRealmId: integer("gameRealmId").notNull(),
-  createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
-});
-
-export const pricesRelations = relations(productPrices, ({ one }) => ({
-  product: one(products, {
-    fields: [productPrices.productId],
-    references: [products.id],
-  }),
-  gameRealm: one(gameRealms, {
-    fields: [productPrices.gameRealmId],
-    references: [gameRealms.id],
-  }),
-}));
+export type ProductPricesUnitUnion = typeof products.$inferSelect.unit;
 
 export const products = pgTable(
   "Products",
   {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
+    price: decimal("price", { precision: 19, scale: 4 }).notNull(),
+    unit: productPricesUnitEnum("unit").notNull(),
     description: text("description"),
-    gameId: integer("gameId").notNull(),
     gameRealmId: integer("gameRealmId").notNull(),
     productCategoryId: integer("productCategoryId").notNull(),
     createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
   },
   (table) => ({
-    products_unique_idx: unique("products_game_gameRealm_productCategory").on(table.gameId, table.gameRealmId, table.productCategoryId),
+    products_unique_idx: unique("products_gameRealm_productCategory").on(table.gameRealmId, table.productCategoryId),
   }),
 );
 
 export const productsRelations = relations(products, ({ one, many }) => ({
-  game: one(games, {
-    fields: [products.gameId],
-    references: [games.id],
-  }),
   gameRealm: one(gameRealms, {
     fields: [products.gameRealmId],
     references: [gameRealms.id],
-  }),
-  price: one(productPrices, {
-    fields: [products.id],
-    references: [productPrices.productId],
   }),
   productCategory: one(productCategories, {
     fields: [products.productCategoryId],
@@ -174,7 +137,6 @@ export const salesOrders = pgTable("SalesOrders", {
   status: salesOrdersStatusEnum("status").notNull(),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
-  gameRealmId: integer("gameRealmId").notNull(),
   marketplaceId: integer("marketplaceId").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
@@ -190,10 +152,6 @@ export const salesOrdersRelations = relations(salesOrders, ({ one, many }) => ({
   employee: one(employees, {
     fields: [salesOrders.employeeId],
     references: [employees.id],
-  }),
-  gameRealm: one(gameRealms, {
-    fields: [salesOrders.gameRealmId],
-    references: [gameRealms.id],
   }),
   marketplace: one(marketplaces, {
     fields: [salesOrders.marketplaceId],
@@ -214,7 +172,6 @@ export const purchaseOrders = pgTable("PurchasesOrders", {
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
   supplierId: integer("supplierId"),
-  gameRealmId: integer("gameRealmId").notNull(),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
@@ -234,10 +191,6 @@ export const purchasesOrdersRelations = relations(purchaseOrders, ({ one, many }
     fields: [purchaseOrders.supplierId],
     references: [suppliers.id],
   }),
-  gameRealm: one(gameRealms, {
-    fields: [purchaseOrders.gameRealmId],
-    references: [gameRealms.id],
-  }),
   productStockTransactions: many(productStockTransactions),
 }));
 
@@ -250,7 +203,6 @@ export const productStockTransactions = pgTable("ProductStockTransactions", {
   transactionType: productStockTransactionsTypeEnum("transactionType").notNull(),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
-  gameRealmId: integer("gameRealmId").notNull(),
   salesOrderId: integer("salesOrderId"),
   purchaseOrderId: integer("purchaseOrderId"),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
@@ -265,10 +217,6 @@ export const productStockTransactionsRelations = relations(productStockTransacti
   employee: one(employees, {
     fields: [productStockTransactions.employeeId],
     references: [employees.id],
-  }),
-  gameRealm: one(gameRealms, {
-    fields: [productStockTransactions.gameRealmId],
-    references: [gameRealms.id],
   }),
   salesOrder: one(salesOrders, {
     fields: [productStockTransactions.salesOrderId],
@@ -286,13 +234,12 @@ export const productStock = pgTable(
     id: serial("id").primaryKey(),
     productId: integer("productId").notNull(),
     employeeId: integer("employeeId").notNull(),
-    gameRealmId: integer("gameRealmId").notNull(),
     currentStock: decimal("currentStock", { precision: 19, scale: 4 }).notNull(),
     createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
   },
   (table) => ({
-    productStock_unique_idx: unique("productStock_employee_product_gameRealm").on(table.employeeId, table.productId, table.gameRealmId),
+    productStock_unique_idx: unique("productStock_employee_product").on(table.employeeId, table.productId),
   }),
 );
 
@@ -304,10 +251,6 @@ export const productStockRelations = relations(productStock, ({ one }) => ({
   employee: one(employees, {
     fields: [productStock.employeeId],
     references: [employees.id],
-  }),
-  gameRealm: one(gameRealms, {
-    fields: [productStock.gameRealmId],
-    references: [gameRealms.id],
   }),
 }));
 

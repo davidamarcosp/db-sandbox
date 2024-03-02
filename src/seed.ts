@@ -17,7 +17,6 @@ async function seedDatabase() {
     await seedProductCategories();
     await seedGameRealms();
     await seedProducts();
-    await seedProductPrices();
     console.log("SEED ENDED");
   } catch (error) {
     console.log(error);
@@ -84,21 +83,9 @@ async function seedProducts() {
   await db
     .insert(schema.products)
     .values([
-      { id: 1, gameRealmId: 1, gameId: 1, productCategoryId: 1, name: "OSRS Gold", description: "Gold in OSRS" },
-      { id: 2, gameRealmId: 2, gameId: 2, productCategoryId: 1, name: "RS3 Gold", description: "Gold in RS3" },
-      { id: 3, gameRealmId: 3, gameId: 3, productCategoryId: 1, name: "WoW Gold", description: "Gold in WoW" },
-    ])
-    .onConflictDoNothing();
-}
-
-async function seedProductPrices() {
-  await db.delete(schema.productPrices);
-  await db
-    .insert(schema.productPrices)
-    .values([
-      { id: 1, gameRealmId: 1, productId: 1, unit: "MILLION", price: "0.17" },
-      { id: 2, gameRealmId: 2, productId: 2, unit: "MILLION", price: "0.017" },
-      { id: 3, gameRealmId: 3, productId: 3, unit: "THOUSAND", price: "5" },
+      { id: 1, gameRealmId: 1, productCategoryId: 1, name: "OSRS Gold", description: "Gold in OSRS", price: "0.17", unit: "MILLION" },
+      { id: 2, gameRealmId: 2, productCategoryId: 1, name: "RS3 Gold", description: "Gold in RS3", price: "0.0017", unit: "MILLION" },
+      { id: 3, gameRealmId: 3, productCategoryId: 1, name: "WoW Gold", description: "Gold in WoW", price: "0.18", unit: "UNIT" },
     ])
     .onConflictDoNothing();
 }

@@ -45,15 +45,13 @@ const db = drizzle(client, { schema, logger: true });
 // };
 
 export async function updateStockTransaction(order: schema.PurchaseOrder | schema.SalesOrder, type: ProductStockTransactionTypeUnion) {
-  const { employeeId, productId, gameRealmId, quantity } = order;
+  const { employeeId, productId, quantity } = order;
 
   await db.transaction(async (tx) => {
     const [stock] = await tx
       .select()
       .from(schema.productStock)
-      .where(
-        and(eq(schema.productStock.employeeId, employeeId), eq(schema.productStock.productId, productId), eq(schema.productStock.gameRealmId, gameRealmId)),
-      );
+      .where(and(eq(schema.productStock.employeeId, employeeId), eq(schema.productStock.productId, productId)));
 
     if (stock) {
       const updatedStock = new Decimal(stock.currentStock).add(new Decimal(quantity)).toString();
@@ -62,7 +60,6 @@ export async function updateStockTransaction(order: schema.PurchaseOrder | schem
       await tx.insert(schema.productStock).values({
         currentStock: quantity.toLocaleString(),
         employeeId,
-        gameRealmId,
         productId,
       });
     }
@@ -70,7 +67,6 @@ export async function updateStockTransaction(order: schema.PurchaseOrder | schem
     await tx.insert(schema.productStockTransactions).values({
       employeeId,
       productId,
-      gameRealmId,
       stockChange: quantity.toLocaleString(),
       transactionType: type,
       purchaseOrderId: "purchaseOrderId" in order ? order.purchaseOrderId : null,

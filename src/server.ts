@@ -4,7 +4,7 @@ dotenv.config();
 import * as faker from "@faker-js/faker";
 import { serve } from "@hono/node-server";
 import { Decimal } from "decimal.js";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Hono } from "hono";
 import postgres from "postgres";
@@ -12,7 +12,7 @@ import { updateStockTransaction } from ".";
 import * as schema from "./schema";
 
 const client = postgres(process.env.DB_URL as string);
-const db = drizzle(client, { schema, logger: true });
+const db = drizzle(client, { schema });
 
 const app = new Hono();
 
@@ -62,7 +62,6 @@ app.post("/generate/purchase", async (c) => {
     .values({
       supplierId: supplier.id,
       employeeId: employee.id,
-      gameRealmId: product.gameRealmId,
       price: randomPrice,
       productId: product.id,
       quantity: randomQuantity,
@@ -77,9 +76,9 @@ app.post("/generate/purchase", async (c) => {
 });
 
 app.post("/generate/sale", async (c) => {
-  const { productId, marketplaceId, employeeId } = c.req.query();
+  const { productId, marketplaceId, employeeId, amount } = c.req.query();
 
-  const queryParams = { productId, marketplaceId, employeeId };
+  const queryParams = { productId, marketplaceId, employeeId, amount };
 
   const { productId: parsedProductId, marketplaceId: parsedMarketplaceId, employeeId: parsedEmployeeId } = validateQueryParams(queryParams);
 
@@ -110,14 +109,13 @@ app.post("/generate/sale", async (c) => {
   }
 
   const randomPrice = new Decimal(faker.fakerEN.number.float({ max: 1500, min: 15, fractionDigits: 2 })).toString();
-  const randomQuantity = new Decimal(faker.fakerEN.number.float({ max: 2000, min: 100, fractionDigits: 2 })).toString();
+  const randomQuantity = amount ? amount : new Decimal(faker.fakerEN.number.float({ max: 2000, min: 100, fractionDigits: 2 })).toString();
   const rate = (+randomPrice / +randomQuantity).toString();
 
   const createdSale = await db
     .insert(schema.salesOrders)
     .values({
       employeeId: employee.id,
-      gameRealmId: product.gameRealmId,
       marketplaceId: marketplace.id,
       productId: product.id,
       status: "CREATED",
@@ -164,40 +162,44 @@ app.post("/generate/delivery", async (c) => {
   const isSaleFullyDelivered = missingQuantitytoDeliver.toString() === randomQuantityDelivered;
 
   const wasTransactionDone = await db.transaction(async (tx) => {
-    const [stock] = await tx
+    const result = await tx
       .select()
       .from(schema.productStock)
       .where(
         and(
           eq(schema.productStock.employeeId, salesOrder.employeeId),
           eq(schema.productStock.productId, salesOrder.productId),
-          eq(schema.productStock.gameRealmId, salesOrder.gameRealmId),
+          gte(schema.productStock.currentStock, randomQuantityDelivered),
         ),
       );
 
-    if (stock) {
-      const updatedStock = new Decimal(stock.currentStock).minus(new Decimal(randomQuantityDelivered)).toString();
-      await tx.update(schema.productStock).set({ currentStock: updatedStock, updatedAt: new Date().toISOString() }).where(eq(schema.productStock.id, stock.id));
-    } else {
+    if (result.length !== 1) {
       return false;
     }
+
+    const stock = result[0];
+
+    await tx
+      .update(schema.productStock)
+      .set({ currentStock: sql`${schema.productStock.currentStock} - ${randomQuantityDelivered}`, updatedAt: new Date().toISOString() })
+      .where(eq(schema.productStock.id, stock.id));
 
     await tx.insert(schema.productStockTransactions).values({
       employeeId: salesOrder.employeeId,
       productId: salesOrder.productId,
-      gameRealmId: salesOrder.gameRealmId,
       stockChange: randomQuantityDelivered,
       transactionType: "SALE",
       salesOrderId: salesOrder.salesOrderId,
     });
 
-    const newQuantityDelivered = new Decimal(salesOrder.quantityDelivered).add(new Decimal(randomQuantityDelivered)).toString();
-
-    await tx.update(schema.salesOrders).set({
-      quantityDelivered: newQuantityDelivered,
-      status: isSaleFullyDelivered ? "DELIVERED" : "CREATED",
-      updatedAt: new Date().toISOString(),
-    });
+    await tx
+      .update(schema.salesOrders)
+      .set({
+        quantityDelivered: sql`${schema.salesOrders.quantityDelivered} + ${randomQuantityDelivered}`,
+        status: isSaleFullyDelivered ? "DELIVERED" : "CREATED",
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.salesOrders.salesOrderId, salesOrder.salesOrderId));
 
     return true;
   });
