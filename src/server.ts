@@ -131,10 +131,14 @@ app.post("/generate/sale", async (c) => {
 });
 
 app.post("/generate/delivery", async (c) => {
-  const { salesOrderId } = c.req.query();
+  const { salesOrderId, amount } = c.req.query();
 
   if (salesOrderId && Number.isNaN(parseInt(salesOrderId))) {
-    return c.json({ message: "Invalid salesOrderId" }, 404);
+    return c.json({ message: "Invalid salesOrderId" }, 400);
+  }
+
+  if (amount && Number.isNaN(parseInt(amount))) {
+    return c.json({ message: "Invalid amount" }, 400);
   }
 
   const salesOrders = salesOrderId
@@ -148,7 +152,15 @@ app.post("/generate/delivery", async (c) => {
   }
 
   const missingQuantitytoDeliver = new Decimal(salesOrder.quantity).minus(new Decimal(salesOrder.quantityDelivered)).toNumber();
-  const randomQuantityDelivered = new Decimal(faker.fakerEN.number.float({ max: missingQuantitytoDeliver, min: 0, fractionDigits: 2 })).toString();
+
+  const randomQuantityDelivered = amount
+    ? amount
+    : new Decimal(faker.fakerEN.number.float({ max: missingQuantitytoDeliver, min: 0, fractionDigits: 2 })).toString();
+
+  if (parseInt(amount) > missingQuantitytoDeliver) {
+    return c.json({ message: "Amount is too big" }, 400);
+  }
+
   const isSaleFullyDelivered = missingQuantitytoDeliver.toString() === randomQuantityDelivered;
 
   const wasTransactionDone = await db.transaction(async (tx) => {
