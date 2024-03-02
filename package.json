@@ -5,25 +5,32 @@
   "main": "index.js",
   "scripts": {
     "start": "tsx ./src/index.ts",
+    "dev": "tsx watch ./src/server.ts",
     "seed": "tsx ./src/seed.ts",
     "unseed": "tsx ./src/unseed.ts",
     "check": "npx @biomejs/biome check --apply ./src",
     "migrate:gen": "drizzle-kit generate:pg",
     "migrate:run": "node ./src/migrator.mjs",
-    "studio": "npm drizzle-kit studio"
+    "studio": "npx drizzle-kit studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@biomejs/biome": "1.5.3",
+    "@faker-js/faker": "^8.4.1",
+    "@types/node": "^20.11.24",
     "drizzle-kit": "^0.20.14",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@hono/node-server": "^1.8.2",
+    "decimal.js": "^10.4.3",
+    "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.29.4",
+    "hono": "^4.0.8",
     "pg": "^8.11.3",
     "postgres": "^3.4.3"
   }

@@ -160,7 +160,7 @@ export const salesOrders = pgTable("SalesOrders", {
   quantityDelivered: decimal("quantityDelivered", { precision: 19, scale: 4 }).default("0").notNull(),
   price: decimal("price", { precision: 19, scale: 4 }).notNull(),
   rate: decimal("rate", { precision: 19, scale: 4 }).notNull(),
-  status: salesOrdersStatusEnum("status"),
+  status: salesOrdersStatusEnum("status").notNull(),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
   gameRealmId: integer("gameRealmId").notNull(),
@@ -194,7 +194,7 @@ export const purchaseOrders = pgTable("PurchasesOrders", {
   quantity: decimal("quantity", { precision: 19, scale: 4 }).notNull(),
   price: decimal("price", { precision: 19, scale: 4 }).notNull(),
   rate: decimal("rate", { precision: 19, scale: 4 }).notNull(),
-  status: purchaseOrdersStatusEnum("status"),
+  status: purchaseOrdersStatusEnum("status").notNull(),
   productId: integer("productId").notNull(),
   employeeId: integer("employeeId").notNull(),
   supplierId: integer("supplierId"),
@@ -300,13 +300,20 @@ export type supplierBalanceTransactionsTypeUnion = typeof supplierBalanceTransac
 
 export const supplierBalanceTransactions = pgTable("SupplierBalanceTransactions", {
   id: serial("id").primaryKey(),
-  balanceChange: decimal("quantityChange", { precision: 19, scale: 4 }).notNull(),
+  balanceChange: decimal("balanceChange", { precision: 19, scale: 4 }).notNull(),
   transactionType: supplierBalanceTransactionsTypeEnum("transactionType").notNull(),
   notes: text("notes"),
   purchasesOrderId: integer("purchasesOrderId"),
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
+
+export const supplierBalanceTransactionsRelations = relations(supplierBalanceTransactions, ({ one }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [supplierBalanceTransactions.purchasesOrderId],
+    references: [purchaseOrders.purchaseOrderId],
+  }),
+}));
 
 export const supplierBalance = pgTable("SupplierBalance", {
   id: serial("id").primaryKey(),
@@ -315,3 +322,10 @@ export const supplierBalance = pgTable("SupplierBalance", {
   createdAt: timestamp("createdAt", { precision: 3, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { precision: 3, mode: "string" }),
 });
+
+export const supplierBalanceRelations = relations(supplierBalance, ({ one }) => ({
+  supplier: one(suppliers, {
+    fields: [supplierBalance.supplierId],
+    references: [suppliers.id],
+  }),
+}));

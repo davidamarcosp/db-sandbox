@@ -27,7 +27,11 @@ async function seedDatabase() {
 
 async function seedEmployees() {
   await db.delete(schema.employees);
-  await db.insert(schema.employees).values({ id: 1, name: "Merlyx", discordId: "149378100088668160" }).onConflictDoNothing();
+  await db.insert(schema.employees).values([
+    { id: 1, name: "Merlyx", discordId: "149378100088668160" },
+    { id: 2, name: "DeivoT", discordId: "147923022760771584" },
+    { id: 3, name: "Keroz", discordId: "147926645653766144" }
+  ]).onConflictDoNothing();
 }
 
 async function seedSupplier() {

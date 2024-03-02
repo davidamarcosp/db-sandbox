@@ -1,19 +1,24 @@
 {
   "compilerOptions": {
     "skipLibCheck": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "pretty": true,
     "resolveJsonModule": true,
     "sourceMap": true,
-    "target": "es2021",
+    "target": "ESNext",
     "outDir": "./dist",
     "baseUrl": "./",
     "strict": true,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": [
+      "node"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
   },
   "include": ["src/**/*.ts", "**/*.mjs", "src/migrator.js"],
   "exclude": ["node_modules"]
